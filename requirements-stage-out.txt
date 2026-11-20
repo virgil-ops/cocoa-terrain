@@ -1,0 +1,4 @@
+boto3==1.40.76
+numpy==2.2.6
+pystac==1.14.0
+rasterio==1.4.3

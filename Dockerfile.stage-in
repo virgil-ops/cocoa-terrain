@@ -1,0 +1,10 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+COPY requirements-stage-in.txt .
+RUN pip install --no-cache-dir -r requirements-stage-in.txt
+
+COPY common.py stage_in.py /app/
+
+USER 1001:1000
