@@ -1,7 +1,7 @@
 cwlVersion: v1.2
 $namespaces:
   s: https://schema.org/
-s:softwareVersion: 1.0.0
+s:softwareVersion: 1.0.2
 
 $graph:
 - class: Workflow
@@ -10,7 +10,7 @@ $graph:
   doc: >
     Downloads Copernicus DEM GLO-30 tiles for an area of interest, computes
     cocoa terrain suitability from elevation and slope thresholds, and
-    publishes a COG with STAC metadata to S3 using three independent images.
+    creates a local COG and STAC Catalog using three independent images.
   inputs:
     bbox:
       type: string
@@ -33,10 +33,10 @@ $graph:
       doc: Pixel size of the suitability raster in degrees.
   outputs:
     catalog_uri:
-      type: string
-      label: S3 URI of the final STAC Catalog
-      doc: S3 URI of the published STAC Catalog and its output assets.
-      outputSource: stage_out/catalog_uri
+      type: Directory
+      label: STAC Catalog URL
+      doc: Local STAC Catalog directory; DPH stages the catalog and its assets.
+      outputSource: stage_out/catalog_dir
   steps:
     stage_in:
       run: "#stage-in"
@@ -55,12 +55,8 @@ $graph:
     stage_out:
       run: "#stage-out"
       in:
-        results_dir: process/results_dir
-        bbox: bbox
-        max_elev: max_elev
-        max_slope: max_slope
-        res: res
-      out: [catalog_uri]
+        input_dir: process/results_dir
+      out: [catalog_dir]
 
 - class: CommandLineTool
   id: stage-in
@@ -96,7 +92,7 @@ $graph:
   id: process
   requirements:
     DockerRequirement:
-      dockerPull: docker.io/stormbreaker0/cocoa-terrain-process:1.0.0
+      dockerPull: docker.io/stormbreaker0/cocoa-terrain-process:1.0.2
     NetworkAccess:
       networkAccess: false
     ResourceRequirement:
@@ -141,49 +137,28 @@ $graph:
 - class: CommandLineTool
   id: stage-out
   requirements:
-    InlineJavascriptRequirement: {}
     DockerRequirement:
-      dockerPull: docker.io/stormbreaker0/cocoa-terrain-stage-out:1.0.0
+      dockerPull: docker.io/stormbreaker0/dph-stac-stage-out:1.0.0
     NetworkAccess:
-      networkAccess: true
+      networkAccess: false
     ResourceRequirement:
-      ramMin: 512
+      ramMin: 256
       coresMin: 1
   baseCommand:
   - python
   - /app/stage_out.py
-  stdout: catalog-uri.txt
   inputs:
-    results_dir:
+    input_dir:
       type: Directory
       inputBinding:
-        prefix: --results-dir
-    bbox:
-      type: string
-      inputBinding:
-        prefix: --bbox=
-        separate: false
-    max_elev:
-      type: float
-      inputBinding:
-        prefix: --max-elev
-    max_slope:
-      type: float
-      inputBinding:
-        prefix: --max-slope
-    res:
-      type: float
-      inputBinding:
-        prefix: --res
-    outdir:
+        prefix: --input-dir
+    output_dir:
       type: string
       default: stage-out
       inputBinding:
-        prefix: --outdir
+        prefix: --output-dir
   outputs:
-    catalog_uri:
-      type: string
+    catalog_dir:
+      type: Directory
       outputBinding:
-        glob: catalog-uri.txt
-        loadContents: true
-        outputEval: $(self[0].contents.trim())
+        glob: stage-out

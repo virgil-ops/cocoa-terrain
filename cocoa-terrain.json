@@ -1,9 +1,9 @@
 {
   "processDescription": {
     "processID": "cocoa-terrain",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "title": "Cocoa Terrain Suitability",
-    "description": "Downloads Copernicus DEM GLO-30 tiles for an area of interest, evaluates terrain suitability using elevation and slope thresholds, and publishes a Cloud Optimized GeoTIFF with STAC metadata to S3.",
+    "description": "Downloads Copernicus DEM GLO-30 tiles for an area of interest, evaluates terrain suitability using elevation and slope thresholds, creates a Cloud Optimized GeoTIFF, and generates a STAC Catalog. DPH manages artifact persistence and optional S3 upload.",
     "keywords": [
       "cocoa",
       "terrain suitability",
@@ -62,10 +62,11 @@
     },
     "outputs": {
       "catalog_uri": {
-        "title": "STAC Catalog URI",
-        "description": "S3 URI of the published STAC Catalog and its output assets.",
+        "title": "STAC Catalog URL",
+        "description": "DPH artifact URL for the STAC Catalog and its output assets.",
         "schema": {
-          "type": "string"
+          "type": "string",
+          "format": "uri"
         }
       }
     },
@@ -73,7 +74,7 @@
       "async-execute"
     ],
     "outputTransmission": [
-      "value"
+      "reference"
     ],
     "owner": "MEEO"
   },

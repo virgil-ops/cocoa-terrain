@@ -1,5 +1,6 @@
 """Shared path and bounding-box helpers for the cocoa terrain workflow."""
 
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -35,6 +36,29 @@ def bbox_geometry(bbox: tuple[float, float, float, float]) -> dict:
             [west, south],
         ]],
     }
+
+
+def suitability_raster_name(
+    bbox: tuple[float, float, float, float],
+    max_elev: float,
+    max_slope: float,
+    resolution: float,
+) -> str:
+    """Name the raster from a canonical hash of the algorithm parameters."""
+    parameters = {
+        "bbox": list(bbox),
+        "max_elev": max_elev,
+        "max_slope": max_slope,
+        "resolution": resolution,
+    }
+    encoded = json.dumps(
+        parameters,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode("utf-8")
+    digest = hashlib.md5(encoded, usedforsecurity=False).hexdigest()
+    return f"suitability-{digest}.tif"
 
 
 def _resolve_local_href(root: Path, base_dir: Path, href: str) -> Path:
